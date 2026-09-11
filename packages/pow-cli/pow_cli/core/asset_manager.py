@@ -537,7 +537,8 @@ class AssetManager:
         if assets_symlink.is_symlink():
             raise AssetError(
                 f"'{assets_symlink}' is already a symlink.\n"
-                "Remove it manually before running this command."
+                "Run 'pow asset unset' to remove the current asset configuration "
+                "before running this command again."
             )
 
     @staticmethod

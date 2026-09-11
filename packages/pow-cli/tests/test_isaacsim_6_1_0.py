@@ -115,6 +115,24 @@ def test_6_1_0_asset_set_info_unset_preserves_assets(project, monkeypatch):
     assert sentinel.read_text() == "user asset"
 
 
+def test_asset_set_existing_symlink_suggests_asset_unset(project, monkeypatch):
+    from pow_cli.core.asset_manager import AssetError, AssetManager
+
+    monkeypatch.setattr(
+        AssetManager, "OMNIVERSE_TOML_PATH", project / "omniverse.toml"
+    )
+    assets = project / "local-assets"
+    assets.mkdir()
+    manager = AssetManager()
+    manager.global_dir.mkdir(parents=True, exist_ok=True)
+    manager.get_assets_symlink_path().symlink_to(assets, target_is_directory=True)
+
+    with pytest.raises(AssetError, match="pow asset unset") as error:
+        manager.set_local_asset_path(str(assets))
+
+    assert "Remove it manually" not in str(error.value)
+
+
 @pytest.mark.parametrize("version", ["5.1.0", "6.0.1", "6.1.0"])
 def test_selected_python_launcher(project, mocker, version):
     from pow_cli.core.runner import Runner
