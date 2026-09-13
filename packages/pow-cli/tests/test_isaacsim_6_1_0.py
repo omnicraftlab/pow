@@ -24,7 +24,7 @@ def project(tmp_path, monkeypatch, reset_config_singleton):
 def test_release_and_installed_fallback(tmp_path):
     assert PowConfig.ISAACSIM_VERSION == "6.1.0"
     assert PowConfig.release("6.1.0")["url"] == "https://downloads.isaacsim.nvidia.com/isaac-sim-standalone-6.1.0-linux-x86_64.zip"
-    for version in ("5.1.0", "6.0.1", "6.1.0"):
+    for version in ("5.1.0", "6.1.0"):
         install = PowConfig.version_dir(version, tmp_path)
         install.mkdir(parents=True)
         (install / "isaac-sim.sh").touch()
@@ -32,13 +32,13 @@ def test_release_and_installed_fallback(tmp_path):
 
 
 def test_version_precedence(mocker):
-    mocker.patch.object(PowConfig, "configured_default_version", return_value="6.0.1")
-    picker = mocker.patch("pow_cli.cli.init.ask_choice", return_value="6.0.1")
+    mocker.patch.object(PowConfig, "configured_default_version", return_value="5.1.0")
+    picker = mocker.patch("pow_cli.cli.init.ask_choice", return_value="5.1.0")
     assert _resolve_sim_version("6.1.0", "5.1.0") == "6.1.0"
     assert _resolve_sim_version(None, "5.1.0") == "5.1.0"
     picker.assert_not_called()
-    assert _resolve_sim_version(None, None) == "6.0.1"
-    assert picker.call_args.kwargs["default"] == "6.0.1"
+    assert _resolve_sim_version(None, None) == "5.1.0"
+    assert picker.call_args.kwargs["default"] == "5.1.0"
 
 
 def test_switch_preserves_config_and_is_idempotent(project):
@@ -58,7 +58,7 @@ def test_switch_preserves_config_and_is_idempotent(project):
     assert init.link_managed_isaacsim("6.1.0")["status"] == "Existed"
 
 
-@pytest.mark.parametrize("version,namespace", [("5.1.0", "5.1"), ("6.0.1", "6.0"), ("6.1.0", "6.1"), ("7.0.0", "")])
+@pytest.mark.parametrize("version,namespace", [("5.1.0", "5.1"), ("6.0.1", ""), ("6.1.0", "6.1"), ("7.0.0", "")])
 def test_verified_asset_mapping(version, namespace):
     assert _asset_version_of(version) == namespace
 
@@ -133,7 +133,7 @@ def test_asset_set_existing_symlink_suggests_asset_unset(project, monkeypatch):
     assert "Remove it manually" not in str(error.value)
 
 
-@pytest.mark.parametrize("version", ["5.1.0", "6.0.1", "6.1.0"])
+@pytest.mark.parametrize("version", ["5.1.0", "6.1.0"])
 def test_selected_python_launcher(project, mocker, version):
     from pow_cli.core.runner import Runner
     (project / "pow.toml").write_text(f'[sim]\nversion = "{version}"\nenable_ros = false\n')

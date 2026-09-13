@@ -238,7 +238,7 @@ def lint_file(file_path: Path, alias_config: AliasConfig | None = None) -> List[
         rules.append((ros_ws_rel_re, _handle_ros_rel, "line"))
 
     # Rule 4: Isaac asset version must match [sim] version
-    #   Assets/Isaac/5.0/... → Assets/Isaac/6.0/...   (when version = "6.0.1")
+    #   Assets/Isaac/5.1/... → Assets/Isaac/6.1/...   (when version = "6.1.0")
     if asset_version_re:
         def _handle_asset_version(m, _fp, _ln):
             found = m.group(1)

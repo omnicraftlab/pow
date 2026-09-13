@@ -20,7 +20,7 @@ Support platforms:
 | :-------------------- | :--------------------------- |
 | OS                    | Ubuntu 22.04 / 24.04         |
 | ROS 2 Docker          | Jazzy                        |
-| Isaac Sim             | `6.1.0` (default), `6.0.1`, `5.1.0`   |
+| Isaac Sim             | `6.1.0` (default), `5.1.0`   |
 
 For the full list of ready-to-use commands and options, see the [CLI Reference](docs/cli-reference.md).
 
@@ -217,7 +217,7 @@ your-project/
 ~/.pow/
 ├── isaacsim/             # Downloaded Isaac Sim installations
 │   ├── 5.1.0/            # Isaac Sim 5.1.0 app files
-│   └── 6.0.1/            # Isaac Sim 6.0.1 app files
+│   └── 6.1.0/            # Isaac Sim 6.1.0 app files
 ├── modules/              # Shared modules
 ├── assets/               # Symlink to the configured local asset directory
 └── system.toml           # Global system configuration ([sim] default_version, [asset])

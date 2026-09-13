@@ -49,7 +49,7 @@ def test_os_check_failure(initializer, mocker):
     "version,expected_host",
     [
         ("5.1.0", "https://download.isaacsim.omniverse.nvidia.com/"),
-        ("6.0.1", "https://downloads.isaacsim.nvidia.com/"),
+        ("6.1.0", "https://downloads.isaacsim.nvidia.com/"),
     ],
 )
 def test_download_extracts_required_scripts(initializer, archive_download, version, expected_host):

@@ -39,11 +39,11 @@ class TestSim:
 
     def test_launch_default_version_follows_installed(self, mocker):
         """-v defaults to whatever is installed, not a frozen constant."""
-        mocker.patch.object(PowConfig, "resolve_installed_version", return_value="6.0.1")
+        mocker.patch.object(PowConfig, "resolve_installed_version", return_value="6.1.0")
 
         result = self._invoke(["--no-ros"])
         assert result.exit_code == 0
-        assert self.mock_run.call_args.kwargs["version"] == "6.0.1"
+        assert self.mock_run.call_args.kwargs["version"] == "6.1.0"
 
     def test_no_ros_disables_bridge(self):
         result = self._invoke(["--no-ros"])
@@ -111,7 +111,7 @@ class TestSim:
     def test_help_lists_launch_options(self, mocker):
         """Bare `pow sim` accepts launch's options, so its help must show them."""
         scan = mocker.patch.object(
-            PowConfig, "resolve_installed_version", return_value="6.0.1"
+            PowConfig, "resolve_installed_version", return_value="6.1.0"
         )
 
         result = self._invoke(["--help"])
@@ -194,22 +194,22 @@ class TestSimDefaultVersion:
         )
 
     def test_pinned_version_is_used(self):
-        self._pin("5.1.0", ["6.0.1", "5.1.0"])
+        self._pin("5.1.0", ["6.1.0", "5.1.0"])
 
         result = self._invoke([])
         assert result.exit_code == 0
         assert self.mock_run.call_args.kwargs["version"] == "5.1.0"
 
     def test_version_option_overrides_the_pin(self):
-        self._pin("5.1.0", ["6.0.1", "5.1.0"])
+        self._pin("5.1.0", ["6.1.0", "5.1.0"])
 
-        result = self._invoke(["-v", "6.0.1"])
+        result = self._invoke(["-v", "6.1.0"])
         assert result.exit_code == 0
-        assert self.mock_run.call_args.kwargs["version"] == "6.0.1"
+        assert self.mock_run.call_args.kwargs["version"] == "6.1.0"
         assert "system.toml pins" not in result.output
 
     def test_missing_pin_is_passed_to_setup_without_falling_back(self, skip_setup):
-        self._pin("5.1.0", ["6.0.1"])
+        self._pin("5.1.0", ["6.1.0"])
 
         result = self._invoke([])
         assert result.exit_code == 0
@@ -226,14 +226,14 @@ class TestSimDefaultVersion:
         assert "system.toml pins" not in result.output
 
     def test_no_pin_falls_back_to_newest_installed(self):
-        self._pin("", ["6.0.1", "5.1.0"])
+        self._pin("", ["6.1.0", "5.1.0"])
 
         result = self._invoke([])
         assert result.exit_code == 0
-        assert self.mock_run.call_args.kwargs["version"] == "6.0.1"
+        assert self.mock_run.call_args.kwargs["version"] == "6.1.0"
 
     def test_check_honors_the_pin(self):
-        self._pin("5.1.0", ["6.0.1", "5.1.0"])
+        self._pin("5.1.0", ["6.1.0", "5.1.0"])
 
         result = self._invoke(["check"])
         assert result.exit_code == 0

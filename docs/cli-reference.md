@@ -29,7 +29,7 @@ pow init --sim-version 5.1.0
 
 | Option          | Description                                                     |
 | :-------------- | :-------------------------------------------------------------- |
-| `--sim-version` | Isaac Sim version to install: `6.1.0`, `6.0.1` or `5.1.0`. Skips the picker |
+| `--sim-version` | Isaac Sim version to install: `6.1.0` or `5.1.0`. Skips the picker |
 
 The version is resolved in this order:
 
@@ -45,7 +45,6 @@ latest release and which are already present in `~/.pow/isaacsim/`. Move with
 [4/10] 📦 Isaac Sim App: Select a version to install
 
    ❯ 6.1.0 (latest)
-     6.0.1
      5.1.0 (installed)
 
    ↑/↓ to move, Enter to confirm
@@ -53,7 +52,7 @@ latest release and which are already present in `~/.pow/isaacsim/`. Move with
 
 > [!NOTE]
 > The picker needs a terminal. When stdin is piped, or in CI, `pow init` falls
-> back to a typed prompt (`Select Isaac Sim version [6.1.0/6.0.1/5.1.0] (6.1.0):`), so
+> back to a typed prompt (`Select Isaac Sim version [6.1.0/5.1.0] (6.1.0):`), so
 > the command stays scriptable. Use `--sim-version` to skip the question entirely.
 
 The chosen version drives the download, the matching `IsaacSim-<version>` ROS
@@ -71,7 +70,7 @@ answer keeps the file:
 - **Yes** — `pow init` re-asks for those three settings and writes **only** those
   three keys back. Everything else in the file survives: custom `exts`,
   `raw_args`, `ros_bridge`, every `[[profiles]]` block, key order and comments.
-  Step 10 lists what changed, e.g. `version: 5.1.0 → 6.0.1`.
+  Step 10 lists what changed, e.g. `version: 5.1.0 → 6.1.0`.
 
 Keys the current template has but your file lacks are not added — pow defaults
 every missing setting, so an older `pow.toml` keeps working as it is.

@@ -202,7 +202,7 @@ def test_ask_path_prompt_is_passed_to_input(monkeypatch):
 
 # ── ask_choice ──────────────────────────────────────────────────────────────────
 
-CHOICES = [("6.0.1", "latest"), ("5.1.0", "installed")]
+CHOICES = [("6.1.0", "latest"), ("5.1.0", "installed")]
 
 
 @pytest.fixture
@@ -225,7 +225,7 @@ def _noop_cbreak():
 def test_ask_choice_returns_default_on_enter(keys):
     keys("enter")
 
-    assert ask_choice("Pick", CHOICES, default="6.0.1") == "6.0.1"
+    assert ask_choice("Pick", CHOICES, default="6.1.0") == "6.1.0"
 
 
 def test_ask_choice_starts_the_cursor_on_the_default(keys):
@@ -238,30 +238,30 @@ def test_ask_choice_starts_the_cursor_on_the_default(keys):
 def test_ask_choice_moves_down(keys):
     keys("down", "enter")
 
-    assert ask_choice("Pick", CHOICES, default="6.0.1") == "5.1.0"
+    assert ask_choice("Pick", CHOICES, default="6.1.0") == "5.1.0"
 
 
 def test_ask_choice_wraps_around_both_ends(keys):
     keys("up", "enter")
 
-    assert ask_choice("Pick", CHOICES, default="6.0.1") == "5.1.0"
+    assert ask_choice("Pick", CHOICES, default="6.1.0") == "5.1.0"
 
     keys("down", "down", "enter")
 
-    assert ask_choice("Pick", CHOICES, default="6.0.1") == "6.0.1"
+    assert ask_choice("Pick", CHOICES, default="6.1.0") == "6.1.0"
 
 
 def test_ask_choice_ignores_unknown_keys(keys):
     keys("", "down", "", "enter")
 
-    assert ask_choice("Pick", CHOICES, default="6.0.1") == "5.1.0"
+    assert ask_choice("Pick", CHOICES, default="6.1.0") == "5.1.0"
 
 
 def test_ask_choice_aborts(keys):
     keys("abort")
 
     with pytest.raises(KeyboardInterrupt):
-        ask_choice("Pick", CHOICES, default="6.0.1")
+        ask_choice("Pick", CHOICES, default="6.1.0")
 
 
 def test_ask_choice_restores_the_cursor_after_an_abort(keys, mocker):
@@ -270,7 +270,7 @@ def test_ask_choice_restores_the_cursor_after_an_abort(keys, mocker):
     show_cursor = mocker.patch.object(prompt_module.console, "show_cursor")
 
     with pytest.raises(KeyboardInterrupt):
-        ask_choice("Pick", CHOICES, default="6.0.1")
+        ask_choice("Pick", CHOICES, default="6.1.0")
 
     assert show_cursor.call_args_list[-1].args == (True,)
 
@@ -278,7 +278,7 @@ def test_ask_choice_restores_the_cursor_after_an_abort(keys, mocker):
 def test_ask_choice_unknown_default_starts_at_the_first_entry(keys):
     keys("enter")
 
-    assert ask_choice("Pick", CHOICES, default="9.9.9") == "6.0.1"
+    assert ask_choice("Pick", CHOICES, default="9.9.9") == "6.1.0"
 
 
 def test_ask_choice_rejects_an_empty_choice_list():
@@ -298,17 +298,17 @@ def test_ask_choice_falls_back_to_a_typed_prompt(monkeypatch):
     monkeypatch.setattr(prompt_module, "_read_key", boom)
     monkeypatch.setattr("builtins.input", lambda prompt="": "5.1.0")
 
-    assert ask_choice("Pick", CHOICES, default="6.0.1") == "5.1.0"
+    assert ask_choice("Pick", CHOICES, default="6.1.0") == "5.1.0"
 
 
 def test_ask_choice_fallback_offers_values_in_display_order(monkeypatch, mocker):
     monkeypatch.setattr(prompt_module, "_is_interactive", lambda: False)
-    ask = mocker.patch.object(prompt_module.Prompt, "ask", return_value="6.0.1")
+    ask = mocker.patch.object(prompt_module.Prompt, "ask", return_value="6.1.0")
 
-    ask_choice("Pick", CHOICES, default="6.0.1")
+    ask_choice("Pick", CHOICES, default="6.1.0")
 
-    assert ask.call_args.kwargs["choices"] == ["6.0.1", "5.1.0"]
-    assert ask.call_args.kwargs["default"] == "6.0.1"
+    assert ask.call_args.kwargs["choices"] == ["6.1.0", "5.1.0"]
+    assert ask.call_args.kwargs["default"] == "6.1.0"
 
 
 # ── ask_choice: key decoding ────────────────────────────────────────────────────

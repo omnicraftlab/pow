@@ -9,7 +9,8 @@ All notable changes to the `pow-cli` package will be documented in this file.
 
 Target: v0.4.0 (version bump and publication are separate).
 
-- Add Isaac Sim 6.1.0 installation and selection, retaining 6.0.1 and 5.1.0.
+- Add Isaac Sim 6.1.0 installation and selection, retaining 5.1.0.
+- Remove Isaac Sim 6.0.1 from the installable versions; projects pinned to it must switch to 6.1.0 or 5.1.0 (existing `~/.pow/isaacsim/6.0.1` installs still launch via `pow sim -v 6.0.1`).
 - Default new projects to 6.1.0 unless a global preference is configured; preserve existing project versions and settings.
 - Reject unknown 6.1.0 ROS workspace/image/container provenance without changing user state; stop instead of deleting stale container-mounted build directories.
 - Remove the mandatory simulator dependency and declare the Python 3.10 TOML fallback.

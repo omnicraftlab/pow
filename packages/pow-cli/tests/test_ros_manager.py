@@ -275,7 +275,7 @@ def test_start_new_container_uses_container_name(mocker):
 
 def test_bridge_env_finds_ros2_core_ext(tmp_path, mocker):
     """Isaac Sim 6.0 renamed isaacsim.ros2.bridge to isaacsim.ros2.core."""
-    isaacsim_dir = tmp_path / "isaacsim" / "6.0.1"
+    isaacsim_dir = tmp_path / "isaacsim" / "6.1.0"
     lib = isaacsim_dir / "exts" / "isaacsim.ros2.core" / "jazzy" / "lib"
     lib.mkdir(parents=True)
     mocker.patch.dict("os.environ", {}, clear=True)
@@ -287,7 +287,7 @@ def test_bridge_env_finds_ros2_core_ext(tmp_path, mocker):
 
 def test_bridge_env_prefers_ros2_core_over_bridge(tmp_path, mocker):
     """When both exist the newer extension name wins."""
-    isaacsim_dir = tmp_path / "isaacsim" / "6.0.1"
+    isaacsim_dir = tmp_path / "isaacsim" / "6.1.0"
     core_lib = isaacsim_dir / "exts" / "isaacsim.ros2.core" / "jazzy" / "lib"
     bridge_lib = isaacsim_dir / "exts" / "isaacsim.ros2.bridge" / "jazzy" / "lib"
     core_lib.mkdir(parents=True)
@@ -301,7 +301,7 @@ def test_bridge_env_prefers_ros2_core_over_bridge(tmp_path, mocker):
 
 def test_isaacsim_bridge_env_reads_ros2_core_via_config(tmp_path, mocker):
     cfg, lib = _make_bridge_config(
-        tmp_path, bridge_distro="jazzy", version="6.0.1", ext="isaacsim.ros2.core",
+        tmp_path, bridge_distro="jazzy", version="6.1.0", ext="isaacsim.ros2.core",
     )
     mocker.patch.dict("os.environ", {}, clear=True)
 
@@ -314,7 +314,7 @@ def test_isaacsim_bridge_env_reads_ros2_core_via_config(tmp_path, mocker):
 
 @pytest.mark.parametrize(
     "version,expected_ref",
-    [("5.1.0", "IsaacSim-5.1.0"), ("6.0.1", "IsaacSim-6.0.1")],
+    [("5.1.0", "IsaacSim-5.1.0")],
 )
 def test_setup_ros_workspace_clones_matching_ref(tmp_path, mocker, version, expected_ref):
     cfg = MagicMock()

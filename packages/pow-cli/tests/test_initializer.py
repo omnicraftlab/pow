@@ -55,7 +55,7 @@ class TestLinkManagedIsaacsim:
         mocker.patch.object(
             Initializer, "config", new_callable=lambda: property(lambda self: cfg)
         )
-        for version in ("5.1.0", "6.0.1"):
+        for version in ("5.1.0", "6.1.0"):
             (cfg.global_path / "isaacsim" / version).mkdir(parents=True)
         project_dir = tmp_path / "project"
         project_dir.mkdir()
@@ -65,27 +65,27 @@ class TestLinkManagedIsaacsim:
     def test_creates_symlink_for_requested_version(self, project):
         cfg, project_dir = project
 
-        result = Initializer().link_managed_isaacsim(version="6.0.1")
+        result = Initializer().link_managed_isaacsim(version="6.1.0")
 
         assert result["status"] == "Created"
-        assert (project_dir / "_isaacsim").resolve() == cfg.global_path / "isaacsim" / "6.0.1"
+        assert (project_dir / "_isaacsim").resolve() == cfg.global_path / "isaacsim" / "6.1.0"
 
     def test_repoints_symlink_when_version_changes(self, project):
         cfg, project_dir = project
         initializer = Initializer()
         initializer.link_managed_isaacsim(version="5.1.0")
 
-        result = initializer.link_managed_isaacsim(version="6.0.1")
+        result = initializer.link_managed_isaacsim(version="6.1.0")
 
         assert result["status"] == "Repointed"
         assert result["previous"].endswith("/5.1.0")
-        assert (project_dir / "_isaacsim").resolve() == cfg.global_path / "isaacsim" / "6.0.1"
+        assert (project_dir / "_isaacsim").resolve() == cfg.global_path / "isaacsim" / "6.1.0"
 
     def test_leaves_symlink_alone_when_already_correct(self, project):
         initializer = Initializer()
-        initializer.link_managed_isaacsim(version="6.0.1")
+        initializer.link_managed_isaacsim(version="6.1.0")
 
-        assert initializer.link_managed_isaacsim(version="6.0.1")["status"] == "Existed"
+        assert initializer.link_managed_isaacsim(version="6.1.0")["status"] == "Existed"
 
     def test_never_deletes_a_real_directory(self, project):
         _, project_dir = project
@@ -93,7 +93,7 @@ class TestLinkManagedIsaacsim:
         real_dir.mkdir()
         (real_dir / "keep.txt").write_text("mine")
 
-        result = Initializer().link_managed_isaacsim(version="6.0.1")
+        result = Initializer().link_managed_isaacsim(version="6.1.0")
 
         assert result["status"] == "Error"
         assert "not a symlink" in result["message"]
@@ -109,7 +109,7 @@ class TestLinkManagedIsaacsim:
 class TestPatchPowToml:
     def test_writes_selected_version(self, tmp_path):
         pow_toml = tmp_path / "pow.toml"
-        pow_toml.write_text('[sim]\nversion = "6.0.1"\nenable_ros = false\n')
+        pow_toml.write_text('[sim]\nversion = "6.1.0"\nenable_ros = false\n')
 
         Initializer()._patch_pow_toml(
             pow_toml, enable_ros=True, isaacsim_ros_ws="~/ws", sim_version="5.1.0",
@@ -124,12 +124,12 @@ class TestPatchPowToml:
     def test_reports_only_keys_that_moved(self, tmp_path):
         pow_toml = tmp_path / "pow.toml"
         pow_toml.write_text(
-            '[sim]\nversion = "6.0.1"\nenable_ros = false\n'
+            '[sim]\nversion = "6.1.0"\nenable_ros = false\n'
             'isaacsim_ros_ws = "~/ws"\n'
         )
 
         changed = Initializer()._patch_pow_toml(
-            pow_toml, enable_ros=True, isaacsim_ros_ws="~/ws", sim_version="6.0.1",
+            pow_toml, enable_ros=True, isaacsim_ros_ws="~/ws", sim_version="6.1.0",
         )
 
         assert changed == {"enable_ros": (False, True)}
@@ -139,22 +139,22 @@ class TestPatchPowToml:
         pow_toml.write_text('[sim]\nexts = ["mine"]\n')
 
         changed = Initializer()._patch_pow_toml(
-            pow_toml, enable_ros=False, isaacsim_ros_ws="~/ws", sim_version="6.0.1",
+            pow_toml, enable_ros=False, isaacsim_ros_ws="~/ws", sim_version="6.1.0",
         )
 
-        assert changed["version"] == (None, "6.0.1")
+        assert changed["version"] == (None, "6.1.0")
         assert changed["enable_ros"] == (None, False)
 
     def test_no_write_when_nothing_changed(self, tmp_path):
         pow_toml = tmp_path / "pow.toml"
         original = (
-            '# hand written\n[sim]\nversion   =   "6.0.1"\n'
+            '# hand written\n[sim]\nversion   =   "6.1.0"\n'
             'enable_ros = true\nisaacsim_ros_ws = "~/ws"\n'
         )
         pow_toml.write_text(original)
 
         changed = Initializer()._patch_pow_toml(
-            pow_toml, enable_ros=True, isaacsim_ros_ws="~/ws", sim_version="6.0.1",
+            pow_toml, enable_ros=True, isaacsim_ros_ws="~/ws", sim_version="6.1.0",
         )
 
         assert changed == {}
@@ -176,7 +176,7 @@ class TestPatchPowToml:
 
     def test_invalid_toml_raises_and_leaves_file_alone(self, tmp_path):
         pow_toml = tmp_path / "pow.toml"
-        broken = '[sim]\nversion = "6.0.1"\nbad = [\n'
+        broken = '[sim]\nversion = "6.1.0"\nbad = [\n'
         pow_toml.write_text(broken)
 
         with pytest.raises(tomlkit.exceptions.ParseError):
@@ -216,13 +216,13 @@ cpu_performance_mode = true
 
         result = Initializer().create_pow_toml(
             override=True, enable_ros=True, isaacsim_ros_ws="~/ws",
-            sim_version="6.0.1",
+            sim_version="6.1.0",
         )
 
         assert result["status"] == "Updated"
         content = self.pow_toml.read_text()
         # The three settings init collected are the only ones that moved.
-        assert 'version = "6.0.1"' in content
+        assert 'version = "6.1.0"' in content
         assert "enable_ros = true" in content
         assert 'isaacsim_ros_ws = "~/ws"' in content
         # Everything the user wrote is still there, comment included.
@@ -239,17 +239,17 @@ cpu_performance_mode = true
 
         result = Initializer().create_pow_toml(
             override=True, enable_ros=True, isaacsim_ros_ws="~/ws",
-            sim_version="6.0.1",
+            sim_version="6.1.0",
         )
 
-        assert result["changed"]["version"] == ("5.1.0", "6.0.1")
+        assert result["changed"]["version"] == ("5.1.0", "6.1.0")
         assert result["changed"]["enable_ros"] == (False, True)
 
     def test_second_identical_run_changes_nothing(self):
         self.pow_toml.write_text(self.CUSTOM)
         kwargs = dict(
             override=True, enable_ros=True, isaacsim_ros_ws="~/ws",
-            sim_version="6.0.1",
+            sim_version="6.1.0",
         )
         Initializer().create_pow_toml(**kwargs)
         after_first = self.pow_toml.read_text()
@@ -264,7 +264,7 @@ cpu_performance_mode = true
 
         result = Initializer().create_pow_toml(
             override=False, enable_ros=True, isaacsim_ros_ws="~/ws",
-            sim_version="6.0.1",
+            sim_version="6.1.0",
         )
 
         assert result["status"] == "Existed"
@@ -289,7 +289,7 @@ cpu_performance_mode = true
 
         result = Initializer().create_pow_toml(
             override=True, enable_ros=True, isaacsim_ros_ws="~/ws",
-            sim_version="6.0.1",
+            sim_version="6.1.0",
         )
 
         assert result["status"] == "Error"
@@ -306,13 +306,13 @@ class TestSetupVscodeConfigs:
         cfg.global_dir_name = ".pow"
         cfg.global_path = tmp_path / ".pow"
         cfg.get.side_effect = lambda key, default=None, **kw: (
-            "6.0.1" if key == "version" else default
+            "6.1.0" if key == "version" else default
         )
         mocker.patch.object(Initializer, "config", new_callable=lambda: property(lambda self: cfg))
 
         # Two installs whose extension lists differ the way the real ones do.
         self.installs = {}
-        for version, ext in (("5.1.0", "python3.11"), ("6.0.1", "python3.12")):
+        for version, ext in (("5.1.0", "python3.11"), ("6.1.0", "python3.12")):
             vscode = cfg.global_path / "isaacsim" / version / ".vscode"
             vscode.mkdir(parents=True)
             (vscode / "launch.json").write_text(
@@ -345,17 +345,17 @@ class TestSetupVscodeConfigs:
         ]
 
     def test_errors_without_a_linked_isaacsim(self):
-        assert Initializer().setup_vscode_configs(version="6.0.1")["status"] == "Error"
+        assert Initializer().setup_vscode_configs(version="6.1.0")["status"] == "Error"
 
     def test_copies_the_other_configs_and_creates_settings(self):
-        self._link("6.0.1")
+        self._link("6.1.0")
 
-        result = Initializer().setup_vscode_configs(version="6.0.1")
+        result = Initializer().setup_vscode_configs(version="6.1.0")
 
         assert self._statuses(result) == {
             "launch.json": "Copied and patched",
             "tasks.json": "Copied and patched",
-            "c_cpp_properties.json": "Not found in source",   # absent in Isaac Sim 6.0.1
+            "c_cpp_properties.json": "Not found in source",   # absent in Isaac Sim 6.1.0
             "settings.json": "Created",
         }
         assert "${workspaceFolder}" not in Path(".vscode/launch.json").read_text()
@@ -367,8 +367,8 @@ class TestSetupVscodeConfigs:
         assert self._extra_paths() == ["_isaacsim/kit/python/lib/python3.11"]
 
         # Switching version rewrites the list to match the new install.
-        self._link("6.0.1")
-        result = Initializer().setup_vscode_configs(version="6.0.1")
+        self._link("6.1.0")
+        result = Initializer().setup_vscode_configs(version="6.1.0")
 
         assert self._statuses(result)["settings.json"] == "Updated"
         assert self._extra_paths() == ["_isaacsim/kit/python/lib/python3.12"]
@@ -379,15 +379,15 @@ class TestSetupVscodeConfigs:
         Initializer().setup_vscode_configs(version="5.1.0")
         before = self.settings.read_text()
 
-        result = Initializer().setup_vscode_configs(version="6.0.1")
+        result = Initializer().setup_vscode_configs(version="6.1.0")
 
         assert result["status"] == "Error"
-        assert "6.0.1" in result["message"]
+        assert "6.1.0" in result["message"]
         assert self.settings.read_text() == before
 
     def test_the_list_is_kept_when_the_version_did_not_change(self):
-        self._link("6.0.1")
-        Initializer().setup_vscode_configs(version="6.0.1")
+        self._link("6.1.0")
+        Initializer().setup_vscode_configs(version="6.1.0")
         self.settings.write_text(
             self.settings.read_text().replace(
                 '"_isaacsim/kit/python/lib/python3.12"',
@@ -395,29 +395,29 @@ class TestSetupVscodeConfigs:
             )
         )
 
-        result = Initializer().setup_vscode_configs(version="6.0.1", version_changed=False)
+        result = Initializer().setup_vscode_configs(version="6.1.0", version_changed=False)
 
         assert self._statuses(result)["settings.json"] == "Already up to date"
         assert self._extra_paths() == ["_isaacsim/kit/python/lib/python3.12", "my/own/stubs"]
 
     def test_the_list_is_written_when_the_project_has_none(self):
         """Seed-only, not never: a project without the key still gets one."""
-        self._link("6.0.1")
+        self._link("6.1.0")
         (self.project / ".vscode").mkdir()
         self.settings.write_text('{\n    "files.autoSave": "afterDelay"\n}\n')
 
-        Initializer().setup_vscode_configs(version="6.0.1", version_changed=False)
+        Initializer().setup_vscode_configs(version="6.1.0", version_changed=False)
 
         assert self._extra_paths() == ["_isaacsim/kit/python/lib/python3.12"]
 
     def test_a_users_settings_survive_a_re_run(self):
-        self._link("6.0.1")
-        Initializer().setup_vscode_configs(version="6.0.1")
+        self._link("6.1.0")
+        Initializer().setup_vscode_configs(version="6.1.0")
         self.settings.write_text(
             self.settings.read_text().replace("{", '{\n    "files.autoSave": "afterDelay",', 1)
         )
 
-        result = Initializer().setup_vscode_configs(version="6.0.1", version_changed=False)
+        result = Initializer().setup_vscode_configs(version="6.1.0", version_changed=False)
 
         assert self._statuses(result)["settings.json"] == "Already up to date"
         assert '"files.autoSave": "afterDelay"' in self.settings.read_text()

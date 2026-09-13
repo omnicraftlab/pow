@@ -9,7 +9,7 @@ There are currently 4 rules that detect specific patterns of paths and replace w
 | 1 | [Relative `.pow/assets` paths](#rule-1--relative-powassets-paths) | `@../../.pow/assets/...@` |
 | 2 | [Absolute home directory paths](#rule-2--absolute-home-directory-paths) | `@/home/username/...@` |
 | 3 | [Relative ROS workspace paths](#rule-3--relative-ros-workspace-paths) | `@../../../../IsaacSim-ros_workspaces/...@` |
-| 4 | [Isaac asset version mismatch](#rule-4--isaac-asset-version-mismatch) | `@.../Assets/Isaac/5.0/...@` when `version = "6.0.1"` |
+| 4 | [Isaac asset version mismatch](#rule-4--isaac-asset-version-mismatch) | `@.../Assets/Isaac/5.1/...@` when `version = "6.1.0"` |
 
 ---
 
@@ -101,19 +101,19 @@ Pattern: @<anything>/Assets/Isaac/<major>.<minor>/<rest>@
 ```
 
 NVIDIA publishes the Isaac asset tree once per minor release — `Assets/Isaac/5.0`,
-`5.1`, `6.0` — and every one of them stays online. A stage authored against 5.1 keeps
-resolving after the project moves to 6.0.1, so nothing fails; it just quietly loads the
+`5.1`, `6.0`, `6.1` — and every one of them stays online. A stage authored against 5.1 keeps
+resolving after the project moves to 6.1.0, so nothing fails; it just quietly loads the
 previous release's assets. This rule makes that visible.
 
-The target uses verified release metadata from `version` in `pow.toml`, so `6.0.1` → `Assets/Isaac/6.0` and
-`5.1.0` → `Assets/Isaac/5.1`, and `6.1.0` → `Assets/Isaac/6.1`. Unknown releases are not rewritten. It applies to every reference form: production S3 URLs,
+The target uses verified release metadata from `version` in `pow.toml`, so `6.1.0` → `Assets/Isaac/6.1` and
+`5.1.0` → `Assets/Isaac/5.1`. Unknown releases are not rewritten. It applies to every reference form: production S3 URLs,
 `pow-assets` and `user-home` aliases, and still-relative paths.
 
-**Example** (with `version = "6.0.1"`):
+**Example** (with `version = "6.1.0"`):
 
 ```diff
 - @https://omniverse-content-production.s3.us-west-2.amazonaws.com/Assets/Isaac/5.0/Isaac/Robots/Carter/nova_carter.usd@
-+ @https://omniverse-content-production.s3.us-west-2.amazonaws.com/Assets/Isaac/6.0/Isaac/Robots/Carter/nova_carter.usd@
++ @https://omniverse-content-production.s3.us-west-2.amazonaws.com/Assets/Isaac/6.1/Isaac/Robots/Carter/nova_carter.usd@
 ```
 
 Only the version segment is rewritten, and only inside an `@...@` reference — the same

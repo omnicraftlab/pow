@@ -24,7 +24,7 @@ class PowConfig:
     #: Installable Isaac Sim releases, keyed by version.  **Ordered latest
     #: first** - the default version, the version picker, and the auto-detected
     #: ``pow sim -v`` all read "newest" as the first entry.
-    #: ``url`` is deliberately spelled out per release: 6.0.1 is served from a
+    #: ``url`` is deliberately spelled out per release: 6.1.0 is served from a
     #: different host than 5.1.0, so the download location cannot be derived
     #: from the version string.
     ISAACSIM_RELEASES: dict[str, dict[str, str]] = {
@@ -34,15 +34,6 @@ class PowConfig:
             "ros_ws_ref": "IsaacSim-6.1.0",
             "ros_ws_commit": "a9e8471ee901bc2332c1e4aca94ac580713ca3ab",
             "asset_version": "6.1",
-        },
-        "6.0.1": {
-            "filename": "isaac-sim-standalone-6.0.1-linux-x86_64.zip",
-            "url": (
-                "https://downloads.isaacsim.nvidia.com/"
-                "isaac-sim-standalone-6.0.1-linux-x86_64.zip"
-            ),
-            "ros_ws_ref": "IsaacSim-6.0.1",
-            "asset_version": "6.0",
         },
         "5.1.0": {
             "filename": "isaac-sim-standalone-5.1.0-linux-x86_64.zip",

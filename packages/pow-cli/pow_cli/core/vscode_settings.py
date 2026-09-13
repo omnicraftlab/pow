@@ -7,8 +7,8 @@ other key in the file - along with its comments and formatting - is left alone.
 
 ``python.analysis.extraPaths`` is not listed here because it is version
 specific.  It is read from the ``settings.json`` of the Isaac Sim install init
-selected and re-pointed at ``_isaacsim/``, so a 5.1.0 and a 6.0.1 project each
-get that version's extension list - the two differ by 30 extensions and by the
+selected and re-pointed at ``_isaacsim/``, so a 5.1.0 and a 6.1.0 project each
+get that version's extension list - the two differ in their extensions and in the
 ``kit/python/lib/python3.X`` entries, so a list from the wrong version leaves
 every Isaac import unresolved.  It is rewritten only when init changes the
 project's Isaac Sim version (see ``replace_extra_paths`` in :func:`apply`);

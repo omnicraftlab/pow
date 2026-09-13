@@ -410,14 +410,14 @@ def _install(base, version):
 def test_supported_versions_are_ordered_latest_first():
     """The default, the picker and resolve_installed_version all take the head."""
     assert PowConfig.SUPPORTED_ISAACSIM_VERSIONS[0] == PowConfig.ISAACSIM_VERSION
-    assert PowConfig.SUPPORTED_ISAACSIM_VERSIONS == ("6.1.0", "6.0.1", "5.1.0")
+    assert PowConfig.SUPPORTED_ISAACSIM_VERSIONS == ("6.1.0", "5.1.0")
 
 
 def test_installed_versions_lists_latest_first(tmp_path):
     _install(tmp_path, "5.1.0")
-    _install(tmp_path, "6.0.1")
+    _install(tmp_path, "6.1.0")
 
-    assert PowConfig.installed_versions(tmp_path) == ["6.0.1", "5.1.0"]
+    assert PowConfig.installed_versions(tmp_path) == ["6.1.0", "5.1.0"]
 
 
 def test_release_returns_metadata_for_supported_versions():
@@ -429,13 +429,19 @@ def test_release_returns_metadata_for_supported_versions():
 
 
 def test_release_hosts_differ_per_version():
-    """6.0.1 is served from a different host - the URL cannot be derived."""
-    assert PowConfig.release("6.0.1")["url"].startswith(
+    """6.1.0 is served from a different host - the URL cannot be derived."""
+    assert PowConfig.release("6.1.0")["url"].startswith(
         "https://downloads.isaacsim.nvidia.com/"
     )
     assert PowConfig.release("5.1.0")["url"].startswith(
         "https://download.isaacsim.omniverse.nvidia.com/"
     )
+
+
+def test_release_rejects_dropped_version():
+    """6.0.1 is no longer installable, so there is no download URL for it."""
+    with pytest.raises(click.ClickException, match="Unsupported Isaac Sim version '6.0.1'"):
+        PowConfig.release("6.0.1")
 
 
 @pytest.mark.parametrize("version", ["9.9.9", "", "5.1", "../5.1.0"])
@@ -461,7 +467,7 @@ def test_version_dir_rejects_path_traversal(version, tmp_path):
 
 def test_installed_versions_ignores_incomplete_extractions(tmp_path):
     _install(tmp_path, "5.1.0")
-    (tmp_path / "isaacsim" / "6.0.1").mkdir()  # no isaac-sim.sh
+    (tmp_path / "isaacsim" / "6.1.0").mkdir()  # no isaac-sim.sh
 
     assert PowConfig.installed_versions(tmp_path) == ["5.1.0"]
 
@@ -473,10 +479,10 @@ def test_resolve_installed_version_returns_sole_install(tmp_path):
 
 
 def test_resolve_installed_version_prefers_newest_known(tmp_path):
-    _install(tmp_path, "6.0.1")
+    _install(tmp_path, "6.1.0")
     _install(tmp_path, "5.1.0")
 
-    assert PowConfig.resolve_installed_version(tmp_path) == "6.0.1"
+    assert PowConfig.resolve_installed_version(tmp_path) == "6.1.0"
 
 
 def test_resolve_installed_version_falls_back_to_default(tmp_path):
@@ -510,7 +516,7 @@ def test_configured_default_version_ignores_malformed_toml(tmp_path):
 
 def test_invalid_pow_toml_reports_a_plain_error(tmp_path, monkeypatch, reset_config_singleton):
     """A syntax error in pow.toml must read as an error, not a tomllib traceback."""
-    (tmp_path / "pow.toml").write_text('[sim]\nversion = "6.0.1"\nbad = [\n')
+    (tmp_path / "pow.toml").write_text('[sim]\nversion = "6.1.0"\nbad = [\n')
     monkeypatch.chdir(tmp_path)
 
     with pytest.raises(click.ClickException, match="is not valid TOML"):

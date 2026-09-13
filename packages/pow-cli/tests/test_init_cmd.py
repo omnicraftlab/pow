@@ -175,7 +175,7 @@ class TestInitCmdSimVersion:
                      return_value={"results": []})
         self.mock_vscode = mocker.patch(
             "pow_cli.core.initializer.Initializer.setup_vscode_configs",
-            return_value={"status": "Success", "results": [], "version": "6.0.1"},
+            return_value={"status": "Success", "results": [], "version": "6.1.0"},
         )
         mocker.patch("pow_cli.core.initializer.Initializer.setup_omniverse_user_home_alias",
                      return_value={"status": "unchanged", "path": "omniverse.toml"})
@@ -241,7 +241,7 @@ class TestInitCmdSimVersion:
     def test_a_repointed_link_rewrites_the_extension_paths(self, mocker):
         self._no_pow_toml(mocker)
         self.mock_link.return_value = {
-            "status": "Repointed", "path": "_isaacsim", "previous": "/old/6.0.1",
+            "status": "Repointed", "path": "_isaacsim", "previous": "/old/6.1.0",
         }
 
         self.runner.invoke(
@@ -338,19 +338,18 @@ class TestInitCmdSimVersion:
         assert result.exit_code == 0
         choices = self.mock_prompt.call_args[0][1]
         # Latest first, annotated from data pow already has.
-        assert choices == [("6.1.0", "latest"), ("6.0.1", ""), ("5.1.0", "installed")]
+        assert choices == [("6.1.0", "latest"), ("5.1.0", "installed")]
         assert self.mock_prompt.call_args.kwargs["default"] == PowConfig.ISAACSIM_VERSION
         assert self.mock_download.call_args.kwargs["version"] == "5.1.0"
 
     def test_picker_marks_a_version_both_latest_and_installed(self, mocker):
         self._no_pow_toml(mocker)
-        mocker.patch.object(PowConfig, "installed_versions", return_value=["6.0.1"])
+        mocker.patch.object(PowConfig, "installed_versions", return_value=["6.1.0"])
 
         self.runner.invoke(init_cmd, env={"NO_COLOR": "1", "TERM": "dumb"})
 
         assert self.mock_prompt.call_args[0][1] == [
-            ("6.1.0", "latest"),
-            ("6.0.1", "installed"),
+            ("6.1.0", "latest, installed"),
             ("5.1.0", ""),
         ]
 
@@ -382,7 +381,7 @@ class TestInitCmdFinalize:
                      return_value={"results": []})
         self.mock_vscode = mocker.patch(
             "pow_cli.core.initializer.Initializer.setup_vscode_configs",
-            return_value={"status": "Success", "results": [], "version": "6.0.1"},
+            return_value={"status": "Success", "results": [], "version": "6.1.0"},
         )
         mocker.patch("pow_cli.core.initializer.Initializer.setup_omniverse_user_home_alias",
                      return_value={"status": "unchanged", "path": "omniverse.toml"})
@@ -420,7 +419,7 @@ class TestInitCmdFinalize:
             "status": "Updated",
             "path": "pow.toml",
             "changed": {
-                "version": ("5.1.0", "6.0.1"),
+                "version": ("5.1.0", "6.1.0"),
                 "enable_ros": (False, True),
                 "isaacsim_ros_ws": (None, "~/ws"),
             },
@@ -430,7 +429,7 @@ class TestInitCmdFinalize:
 
         assert result.exit_code == 0
         assert "Updated pow.toml" in result.output
-        assert "version: 5.1.0 → 6.0.1" in result.output
+        assert "version: 5.1.0 → 6.1.0" in result.output
         # Booleans read the way pow.toml spells them, not the way Python does.
         assert "enable_ros: false → true" in result.output
         assert "isaacsim_ros_ws: unset → ~/ws" in result.output

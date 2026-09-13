@@ -11,7 +11,7 @@ S3 = "https://omniverse-content-production.s3.us-west-2.amazonaws.com"
 def project(tmp_path, monkeypatch, reset_config_singleton):
     """Build a project on disk and return a writer for its .usda file."""
 
-    def _make(usda: str, *, pow_toml: str | None = '[sim]\nversion = "6.0.1"\n'):
+    def _make(usda: str, *, pow_toml: str | None = '[sim]\nversion = "6.1.0"\n'):
         if pow_toml is not None:
             (tmp_path / "pow.toml").write_text(pow_toml)
         usda_file = tmp_path / "stage.usda"
@@ -35,12 +35,12 @@ class TestAssetVersionRule:
         assert len(issues) == 1
         # Only the version segment is reported, so the fix survives rule 1.
         assert issues[0].original == "Assets/Isaac/5.0"
-        assert issues[0].replacement == "Assets/Isaac/6.0"
+        assert issues[0].replacement == "Assets/Isaac/6.1"
         assert issues[0].line == 1
-        assert "does not match sim.version 6.0.1" in issues[0].message
+        assert "does not match sim.version 6.1.0" in issues[0].message
 
     def test_matching_version_is_left_alone(self, project):
-        usda = project(_ref("6.0"))
+        usda = project(_ref("6.1"))
 
         assert lint_file(usda) == []
 
@@ -49,16 +49,16 @@ class TestAssetVersionRule:
 
         fix_file(usda, lint_file(usda))
 
-        assert usda.read_text() == _ref("6.0")
+        assert usda.read_text() == _ref("6.1")
         assert lint_file(usda) == []
 
     def test_a_newer_reference_is_pulled_back_to_the_configured_version(self, project):
-        usda = project(_ref("6.0"), pow_toml='[sim]\nversion = "5.1.0"\n')
+        usda = project(_ref("6.1"), pow_toml='[sim]\nversion = "5.1.0"\n')
 
         issues = lint_file(usda)
 
         assert [(i.original, i.replacement) for i in issues] == [
-            ("Assets/Isaac/6.0", "Assets/Isaac/5.1")
+            ("Assets/Isaac/6.1", "Assets/Isaac/5.1")
         ]
 
     def test_relative_reference_is_fully_fixed_in_one_pass(self, project):
@@ -73,7 +73,7 @@ class TestAssetVersionRule:
 
         assert len(issues) == 2
         text = usda.read_text()
-        assert f"@{S3}/Assets/Isaac/6.0/Isaac/Robots/Carter/nova_carter.usd@" in text
+        assert f"@{S3}/Assets/Isaac/6.1/Isaac/Robots/Carter/nova_carter.usd@" in text
         assert "5.0" not in text
         assert lint_file(usda) == []
 
@@ -84,7 +84,7 @@ class TestAssetVersionRule:
 
         fix_file(usda, lint_file(usda))
 
-        assert usda.read_text() == comment + _ref("6.0")
+        assert usda.read_text() == comment + _ref("6.1")
 
     def test_an_earlier_fix_does_not_strand_a_relative_path(self, project):
         """Rule 4 firing on line 1 must not block rule 1 on line 2."""
@@ -98,7 +98,7 @@ class TestAssetVersionRule:
 
         text = usda.read_text()
         assert "../../.pow/assets" not in text
-        assert text.count("Assets/Isaac/6.0") == 2
+        assert text.count("Assets/Isaac/6.1") == 2
         assert lint_file(usda) == []
 
     def test_version_outside_an_asset_reference_is_ignored(self, project):
@@ -110,7 +110,7 @@ class TestAssetVersionRule:
         assert lint_file(usda) == []
 
     def test_every_mismatched_line_is_reported(self, project):
-        usda = project(_ref("5.0") + _ref("6.0") + _ref("5.1"))
+        usda = project(_ref("5.0") + _ref("6.1") + _ref("5.1"))
 
         issues = lint_file(usda)
 
@@ -120,7 +120,7 @@ class TestAssetVersionRule:
         usda = project(_ref("5.0"))
 
         assert lint_file(usda)[0].label == (
-            "asset version 5.0 → 6.0 (sim.version 6.0.1)"
+            "asset version 5.0 → 6.1 (sim.version 6.1.0)"
         )
 
 
