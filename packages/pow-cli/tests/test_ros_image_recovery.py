@@ -88,3 +88,48 @@ def test_init_prompt_and_failure_order(mocker, tmp_path, accept, build_fails):
         custom.assert_called_once()
     assert confirm.call_args.kwargs["default"] is False
     assert popen.call_count == int(accept)
+
+
+# ── aarch64: the bundled image's base is amd64-only ─────────────────────────────
+
+def test_image_builds_refuse_aarch64(manager, mocker, tmp_path):
+    mocker.patch("platform.machine", return_value="aarch64")
+    run = mocker.patch("subprocess.run")
+    popen = mocker.patch("subprocess.Popen")
+
+    with pytest.raises(click.ClickException, match="amd64-only; ROS Docker images are not available on aarch64"):
+        manager.build_simros_image(ws_path=tmp_path, sim_version="6.1.0")
+    with pytest.raises(click.ClickException, match="amd64-only"):
+        manager.build_custom_ros_image(sim_version="6.1.0", ws_path=tmp_path)
+    run.assert_not_called()
+    popen.assert_not_called()
+
+
+def test_pow_ros_refuses_aarch64_before_looking_for_the_image(mocker, tmp_path, monkeypatch, reset_config_singleton):
+    (tmp_path / "pow.toml").write_text('[sim]\nversion = "6.1.0"\nenable_ros = true\n')
+    monkeypatch.chdir(tmp_path)
+    mocker.patch("platform.machine", return_value="aarch64")
+    exists = mocker.patch.object(RosManager, "image_exists")
+
+    with pytest.raises(click.ClickException, match="amd64-only"):
+        RosManager._load_and_validate_config()
+    exists.assert_not_called()
+
+
+def test_init_skips_ros_image_build_on_aarch64(mocker, tmp_path, capsys):
+    mocker.patch("platform.machine", return_value="aarch64")
+    cfg = Mock(ros_distro="jazzy", ros_bridge="jazzy", ros_dockerfile="Dockerfile", ros_docker_image="custom")
+    mgr = RosManager(cfg)
+    mocker.patch("pow_cli.cli.init.RosManager", wraps=RosManager, return_value=mgr)
+    setup = mocker.patch.object(mgr, "setup_ros_workspace", return_value={"ros_distro": "jazzy", "ubuntu_version": "24.04"})
+    simros = mocker.patch.object(mgr, "build_simros_image")
+    custom = mocker.patch.object(mgr, "build_custom_ros_image")
+
+    enabled, ws = _step6_ros_integration(Mock(config=cfg), ".pow", True, str(tmp_path), "6.1.0")
+
+    assert enabled is True
+    assert ws == str(tmp_path)
+    setup.assert_called_once()
+    simros.assert_not_called()
+    custom.assert_not_called()
+    assert "Skipping ROS Docker image build" in capsys.readouterr().out

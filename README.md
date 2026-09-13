@@ -19,8 +19,14 @@ Support platforms:
 | Platform              | Version / Notes              |
 | :-------------------- | :--------------------------- |
 | OS                    | Ubuntu 22.04 / 24.04         |
-| ROS 2 Docker          | Jazzy                        |
+| Architecture          | x86_64; aarch64 on DGX Spark (DGX OS 7) |
+| ROS 2 Docker          | Jazzy (x86_64 only)          |
 | Isaac Sim             | `6.1.0` (default), `5.1.0`   |
+
+> [!NOTE]
+> On aarch64, pow installs NVIDIA's `linux-aarch64` Isaac Sim build. NVIDIA supports it on
+> DGX Spark only, without cuRobo/cuMotion. The bundled ROS Docker image is amd64-only, so
+> `pow init` skips building it there; Isaac Sim's own ROS 2 bridge still works.
 
 For the full list of ready-to-use commands and options, see the [CLI Reference](docs/cli-reference.md).
 

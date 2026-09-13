@@ -4,6 +4,7 @@ except ImportError:
     import tomli as tomllib
 import distro
 import click
+import platform
 import re
 from pathlib import Path
 from typing import Any, Optional
@@ -24,23 +25,32 @@ class PowConfig:
     #: Installable Isaac Sim releases, keyed by version.  **Ordered latest
     #: first** - the default version, the version picker, and the auto-detected
     #: ``pow sim -v`` all read "newest" as the first entry.
-    #: ``url`` is deliberately spelled out per release: 6.1.0 is served from a
-    #: different host than 5.1.0, so the download location cannot be derived
-    #: from the version string.
-    ISAACSIM_RELEASES: dict[str, dict[str, str]] = {
+    #: ``downloads`` maps each host architecture to its build.  URLs are
+    #: deliberately spelled out per release and architecture: 6.1.0 is served
+    #: from a different host than 5.1.0, so the download location cannot be
+    #: derived from the version string.  A release without an entry for an
+    #: architecture is not installable there.
+    ISAACSIM_RELEASES: dict[str, dict[str, Any]] = {
         "6.1.0": {
-            "filename": "isaac-sim-standalone-6.1.0-linux-x86_64.zip",
-            "url": "https://downloads.isaacsim.nvidia.com/isaac-sim-standalone-6.1.0-linux-x86_64.zip",
+            "downloads": {
+                "x86_64": "https://downloads.isaacsim.nvidia.com/isaac-sim-standalone-6.1.0-linux-x86_64.zip",
+                "aarch64": "https://downloads.isaacsim.nvidia.com/isaac-sim-standalone-6.1.0-linux-aarch64.zip",
+            },
             "ros_ws_ref": "IsaacSim-6.1.0",
             "ros_ws_commit": "a9e8471ee901bc2332c1e4aca94ac580713ca3ab",
             "asset_version": "6.1",
         },
         "5.1.0": {
-            "filename": "isaac-sim-standalone-5.1.0-linux-x86_64.zip",
-            "url": (
-                "https://download.isaacsim.omniverse.nvidia.com/"
-                "isaac-sim-standalone-5.1.0-linux-x86_64.zip"
-            ),
+            "downloads": {
+                "x86_64": (
+                    "https://download.isaacsim.omniverse.nvidia.com/"
+                    "isaac-sim-standalone-5.1.0-linux-x86_64.zip"
+                ),
+                "aarch64": (
+                    "https://download.isaacsim.omniverse.nvidia.com/"
+                    "isaac-sim-standalone-5.1.0-linux-aarch64.zip"
+                ),
+            },
             "ros_ws_ref": "IsaacSim-5.1.0",
             "asset_version": "5.1",
         },
@@ -48,6 +58,13 @@ class PowConfig:
     SUPPORTED_ISAACSIM_VERSIONS = tuple(ISAACSIM_RELEASES)
     ISAACSIM_VERSION = SUPPORTED_ISAACSIM_VERSIONS[0]
     SUPPORTED_UBUNTU_VERSIONS = ["22.04", "24.04"]
+
+    #: Host architectures pow can install and launch Isaac Sim on.  NVIDIA
+    #: supports the aarch64 builds on DGX Spark only.
+    SUPPORTED_ARCHITECTURES = ("x86_64", "aarch64")
+
+    #: ``platform.machine()`` spellings that name the same architecture.
+    _ARCH_ALIASES = {"amd64": "x86_64", "arm64": "aarch64"}
 
     #: A version is used as a single path component under ``<global>/isaacsim/``.
     #: Anything outside this shape could escape that directory.
@@ -118,20 +135,48 @@ class PowConfig:
     # ── Isaac Sim version helpers ────────────────────────────────────────────
 
     @classmethod
-    def release(cls, version: str) -> dict[str, str]:
-        """Return download metadata for *version*, or raise.
+    def host_arch(cls) -> str:
+        """The host CPU architecture, normalized (``amd64`` → ``x86_64``, ``arm64`` → ``aarch64``)."""
+        machine = platform.machine().lower()
+        return cls._ARCH_ALIASES.get(machine, machine)
+
+    @classmethod
+    def versions_for_arch(cls, arch: Optional[str] = None) -> tuple[str, ...]:
+        """Supported versions with a build for *arch* (default: the host), latest first."""
+        arch = arch or cls.host_arch()
+        return tuple(
+            version for version, release in cls.ISAACSIM_RELEASES.items()
+            if arch in release["downloads"]
+        )
+
+    @classmethod
+    def release(cls, version: str, arch: Optional[str] = None) -> dict[str, str]:
+        """Return download metadata for *version* on *arch* (default: the host), or raise.
 
         This is the allowlist gate for installs: the download URL is only ever
         read out of :attr:`ISAACSIM_RELEASES`, never built from a version
-        string supplied on the command line or read from pow.toml.
+        string supplied on the command line or read from pow.toml.  The result
+        carries the ``url`` and ``filename`` of the build for *arch*.
         """
         try:
-            return cls.ISAACSIM_RELEASES[str(version).strip()]
+            release = cls.ISAACSIM_RELEASES[str(version).strip()]
         except KeyError:
             raise click.ClickException(
                 f"Unsupported Isaac Sim version '{version}'. "
                 f"Supported versions: {', '.join(cls.SUPPORTED_ISAACSIM_VERSIONS)}."
             ) from None
+
+        arch = arch or cls.host_arch()
+        url = release["downloads"].get(arch)
+        if url is None:
+            available = cls.versions_for_arch(arch)
+            raise click.ClickException(
+                f"Isaac Sim {version} has no linux-{arch} build. "
+                f"Available on {arch}: {', '.join(available) if available else 'none'}."
+            )
+
+        metadata = {key: value for key, value in release.items() if key != "downloads"}
+        return {**metadata, "url": url, "filename": url.rsplit("/", 1)[-1]}
 
     @classmethod
     def version_dir(cls, version: str, global_path: Optional[Path] = None) -> Path:

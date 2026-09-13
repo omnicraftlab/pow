@@ -353,6 +353,17 @@ class TestInitCmdSimVersion:
             ("5.1.0", ""),
         ]
 
+    def test_picker_only_lists_versions_built_for_the_host_architecture(self, mocker):
+        self._no_pow_toml(mocker)
+        mocker.patch.object(PowConfig, "installed_versions", return_value=[])
+        arch_filter = mocker.patch.object(PowConfig, "versions_for_arch", return_value=("5.1.0",))
+
+        self.runner.invoke(init_cmd, env={"NO_COLOR": "1", "TERM": "dumb"})
+
+        arch_filter.assert_called()
+        assert self.mock_prompt.call_args[0][1] == [("5.1.0", "latest")]
+        assert self.mock_prompt.call_args.kwargs["default"] == "5.1.0"
+
 
 @pytest.mark.cli
 class TestInitCmdFinalize:

@@ -1,7 +1,6 @@
 """Runner core logic."""
 
 import os
-import platform
 import shlex
 import shutil
 import subprocess
@@ -19,6 +18,15 @@ CPU_DEVICES_PATH = Path("/sys/devices/system/cpu")
 
 class Runner:
     """Handles execution of Isaac Sim and related tools."""
+
+    @staticmethod
+    def _require_supported_arch() -> None:
+        """Refuse hosts whose architecture has no Isaac Sim build."""
+        arch = PowConfig.host_arch()
+        if arch not in PowConfig.SUPPORTED_ARCHITECTURES:
+            raise click.ClickException(
+                f"Unsupported platform: {arch}. Isaac Sim runs on x86_64 or aarch64."
+            )
 
     @staticmethod
     def _cpu_governors() -> set[str]:
@@ -131,8 +139,7 @@ class Runner:
         if config.project_root is None:
             raise click.ClickException("Not initialized. Run `pow init` first.")
 
-        if platform.machine().lower() not in ("x86_64", "amd64"):
-            raise click.ClickException("Unsupported platform. Only x86_64 is supported by Isaac Sim.")
+        Runner._require_supported_arch()
 
         enable_ros = config.get("enable_ros", False, profile=profile)
         source_env = RosManager.isaacsim_bridge_env(config, profile=profile) if enable_ros else os.environ.copy()
@@ -170,8 +177,7 @@ class Runner:
                 the inherited environment and no bridge.
             extra_args: Arguments forwarded verbatim to ``isaac-sim.sh``.
         """
-        if platform.machine().lower() not in ("x86_64", "amd64"):
-            raise click.ClickException("Unsupported platform. Only x86_64 is supported by Isaac Sim.")
+        Runner._require_supported_arch()
 
         isaacsim_dir = PowConfig.version_dir(version)
         launch_script = isaacsim_dir / "isaac-sim.sh"
@@ -217,8 +223,7 @@ class Runner:
             version: Isaac Sim version under ``<global_path>/isaacsim/``.
             extra_args: Arguments forwarded verbatim to the check script.
         """
-        if platform.machine().lower() not in ("x86_64", "amd64"):
-            raise click.ClickException("Unsupported platform. Only x86_64 is supported by Isaac Sim.")
+        Runner._require_supported_arch()
 
         isaacsim_dir = PowConfig.version_dir(version)
         check_script = isaacsim_dir / "isaac-sim.compatibility_check.sh"

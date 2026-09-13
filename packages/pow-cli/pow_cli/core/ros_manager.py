@@ -37,6 +37,28 @@ class RosManager:
 
     _SIM_LABEL = "org.omnicraftlab.pow.sim-version"
 
+    #: Architectures the bundled ROS Docker image builds on.  Its base image,
+    #: osrf/ros:jazzy-desktop, is published for amd64 only.
+    _DOCKER_IMAGE_ARCHITECTURES = ("x86_64",)
+
+    @staticmethod
+    def docker_image_supported() -> bool:
+        """Whether the pow_simros image (and images built on it) can run on this host."""
+        return PowConfig.host_arch() in RosManager._DOCKER_IMAGE_ARCHITECTURES
+
+    @staticmethod
+    def docker_image_unsupported_message() -> str:
+        return (
+            "The pow_simros image is built on osrf/ros:jazzy-desktop, which is "
+            f"amd64-only; ROS Docker images are not available on {PowConfig.host_arch()}. "
+            "Isaac Sim's bundled ROS 2 bridge still works."
+        )
+
+    @staticmethod
+    def _require_docker_image_support() -> None:
+        if not RosManager.docker_image_supported():
+            raise click.ClickException(RosManager.docker_image_unsupported_message())
+
     @staticmethod
     def validate_workspace(ws_path: Path, sim_version: str) -> None:
         """Check provenance without changing a user's checkout or build files."""
@@ -253,6 +275,7 @@ class RosManager:
             ws_path: Explicit workspace path override.  When ``None`` the
                      path is read from ``self.config.ros_ws_path``.
         """
+        self._require_docker_image_support()
         ros_ws = ws_path or self.config.ros_ws_path
         ros_distro = self.config.ros_distro
         docker_image = f"pow_simros_{ros_distro}"
@@ -334,6 +357,7 @@ class RosManager:
         so edits to the custom Dockerfile take effect on rebuild.  Pass
         ``no_cache=True`` to bypass the layer cache entirely.
         """
+        self._require_docker_image_support()
         ros_dockerfile = self.config.ros_dockerfile
         if not ros_dockerfile:
             return {"status": "skipped"}
@@ -429,6 +453,7 @@ class RosManager:
                 "Set 'enable_ros = true' under [sim] and re-run 'pow init' to enable it."
             )
 
+        RosManager._require_docker_image_support()
         docker_image = config.ros_image_name
 
         if not RosManager.image_exists(docker_image):

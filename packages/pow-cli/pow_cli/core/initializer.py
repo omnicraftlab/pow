@@ -43,9 +43,10 @@ class Initializer:
 
     def _check_platform(self):
         """Raise RuntimeError when the current platform cannot run Isaac Sim."""
-        if platform.machine() != "x86_64":
+        if PowConfig.host_arch() not in PowConfig.SUPPORTED_ARCHITECTURES:
             raise RuntimeError(
-                f"Unsupported architecture: {platform.machine()}. Isaac Sim requires x86_64."
+                f"Unsupported architecture: {platform.machine()}. "
+                "Isaac Sim requires x86_64 or aarch64."
             )
 
         system = platform.system()

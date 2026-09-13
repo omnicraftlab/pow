@@ -133,12 +133,13 @@ def _step3_global_folder(initializer: Initializer, global_path):
 
 
 def _version_choices() -> list[tuple[str, str]]:
-    """Installable versions, latest first, annotated for the picker."""
+    """Versions installable on this host's architecture, latest first, annotated for the picker."""
     installed = set(PowConfig.installed_versions())
-    latest = PowConfig.SUPPORTED_ISAACSIM_VERSIONS[0]
+    versions = PowConfig.versions_for_arch()
+    latest = versions[0] if versions else None
 
     choices = []
-    for version in PowConfig.SUPPORTED_ISAACSIM_VERSIONS:
+    for version in versions:
         notes = []
         if version == latest:
             notes.append("latest")
@@ -171,7 +172,10 @@ def _resolve_sim_version(flag_version: str | None, config_version: str | None) -
         )
         return config_version
 
-    default = PowConfig.configured_default_version() or PowConfig.ISAACSIM_VERSION
+    available = PowConfig.versions_for_arch()
+    default = PowConfig.configured_default_version() or (
+        available[0] if available else PowConfig.ISAACSIM_VERSION
+    )
     PowConfig.release(default)
     return ask_choice(
         "Select Isaac Sim version",
@@ -299,6 +303,13 @@ def _step6_ros_integration(
         f"(ros_bridge in pow.toml, host Ubuntu {ros_res['ubuntu_version']}) "
         f"via Isaac Sim internal libs."
     )
+
+    if not RosManager.docker_image_supported():
+        console.print(
+            f"   [yellow]⊖[/yellow] Skipping ROS Docker image build: "
+            f"{RosManager.docker_image_unsupported_message()}"
+        )
+        return True, display_path
 
     # Build pow_simros Docker image
     simros_already_built = False

@@ -420,22 +420,68 @@ def test_installed_versions_lists_latest_first(tmp_path):
     assert PowConfig.installed_versions(tmp_path) == ["6.1.0", "5.1.0"]
 
 
-def test_release_returns_metadata_for_supported_versions():
+@pytest.mark.parametrize("arch", PowConfig.SUPPORTED_ARCHITECTURES)
+def test_release_returns_metadata_for_supported_versions(arch):
     for version in PowConfig.SUPPORTED_ISAACSIM_VERSIONS:
-        release = PowConfig.release(version)
+        release = PowConfig.release(version, arch)
         assert release["url"].startswith("https://")
-        assert version in release["filename"]
+        assert release["url"].endswith(f"/{release['filename']}")
+        assert release["filename"] == f"isaac-sim-standalone-{version}-linux-{arch}.zip"
         assert release["ros_ws_ref"] == f"IsaacSim-{version}"
+        assert "downloads" not in release
 
 
 def test_release_hosts_differ_per_version():
     """6.1.0 is served from a different host - the URL cannot be derived."""
-    assert PowConfig.release("6.1.0")["url"].startswith(
+    assert PowConfig.release("6.1.0", "x86_64")["url"].startswith(
         "https://downloads.isaacsim.nvidia.com/"
     )
-    assert PowConfig.release("5.1.0")["url"].startswith(
+    assert PowConfig.release("5.1.0", "x86_64")["url"].startswith(
         "https://download.isaacsim.omniverse.nvidia.com/"
     )
+
+
+@pytest.mark.parametrize(
+    "machine,arch",
+    [("x86_64", "x86_64"), ("AMD64", "x86_64"), ("aarch64", "aarch64"), ("arm64", "aarch64"), ("ppc64le", "ppc64le")],
+)
+def test_host_arch_normalizes_machine_names(mocker, machine, arch):
+    mocker.patch("platform.machine", return_value=machine)
+
+    assert PowConfig.host_arch() == arch
+
+
+def test_release_defaults_to_the_host_architecture(mocker):
+    mocker.patch("platform.machine", return_value="aarch64")
+
+    assert PowConfig.release("6.1.0")["url"] == (
+        "https://downloads.isaacsim.nvidia.com/isaac-sim-standalone-6.1.0-linux-aarch64.zip"
+    )
+
+
+def test_every_version_is_available_on_every_supported_architecture():
+    for arch in PowConfig.SUPPORTED_ARCHITECTURES:
+        assert PowConfig.versions_for_arch(arch) == PowConfig.SUPPORTED_ISAACSIM_VERSIONS
+
+
+def test_unknown_architecture_has_no_builds():
+    assert PowConfig.versions_for_arch("ppc64le") == ()
+    with pytest.raises(click.ClickException, match="no linux-ppc64le build.*Available on ppc64le: none"):
+        PowConfig.release("6.1.0", "ppc64le")
+
+
+def test_release_without_a_build_for_the_arch_is_hidden_and_rejected(mocker):
+    releases = {
+        version: {**release, "downloads": dict(release["downloads"])}
+        for version, release in PowConfig.ISAACSIM_RELEASES.items()
+    }
+    del releases["5.1.0"]["downloads"]["aarch64"]
+    mocker.patch.object(PowConfig, "ISAACSIM_RELEASES", releases)
+
+    assert PowConfig.versions_for_arch("aarch64") == ("6.1.0",)
+    assert PowConfig.versions_for_arch("x86_64") == ("6.1.0", "5.1.0")
+    with pytest.raises(click.ClickException, match="5.1.0 has no linux-aarch64 build. Available on aarch64: 6.1.0"):
+        PowConfig.release("5.1.0", "aarch64")
 
 
 def test_release_rejects_dropped_version():

@@ -102,6 +102,14 @@ class TestRosBuild:
         assert result.exit_code == 0
         assert self.mock_build.call_args.kwargs["no_cache"] is True
 
+    def test_build_refuses_aarch64(self, mocker):
+        mocker.patch("platform.machine", return_value="aarch64")
+        result = self._invoke(["build"])
+        assert result.exit_code != 0
+        assert "amd64-only" in result.output
+        self.mock_build.assert_not_called()
+        self.mock_build_base.assert_not_called()
+
     def test_build_without_dockerfile_hints_and_exits_zero(self):
         self.cfg.ros_dockerfile = ""
         result = self._invoke(["build"])

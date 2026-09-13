@@ -33,9 +33,25 @@ def archive_download(tmp_path, mocker):
 
 
 def test_architecture_check_failure(initializer, mocker):
-    mocker.patch("platform.machine", return_value="arm64")
-    with pytest.raises(RuntimeError, match="Unsupported architecture: arm64"):
+    mocker.patch("platform.machine", return_value="ppc64le")
+    with pytest.raises(RuntimeError, match="Unsupported architecture: ppc64le"):
         initializer.download_isaacsim()
+
+
+@pytest.mark.parametrize(
+    "machine,version,expected_url",
+    [
+        ("aarch64", "6.1.0", "https://downloads.isaacsim.nvidia.com/isaac-sim-standalone-6.1.0-linux-aarch64.zip"),
+        ("arm64", "5.1.0", "https://download.isaacsim.omniverse.nvidia.com/isaac-sim-standalone-5.1.0-linux-aarch64.zip"),
+    ],
+)
+def test_aarch64_downloads_the_aarch64_build(initializer, archive_download, mocker, machine, version, expected_url):
+    mocker.patch("platform.machine", return_value=machine)
+
+    result = initializer.download_isaacsim(version=version, check=True)
+
+    assert result["status"] == "Downloaded and installed"
+    assert archive_download.call_args.args[0] == expected_url
 
 
 def test_os_check_failure(initializer, mocker):

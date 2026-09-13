@@ -23,7 +23,7 @@ def project(tmp_path, monkeypatch, reset_config_singleton):
 
 def test_release_and_installed_fallback(tmp_path):
     assert PowConfig.ISAACSIM_VERSION == "6.1.0"
-    assert PowConfig.release("6.1.0")["url"] == "https://downloads.isaacsim.nvidia.com/isaac-sim-standalone-6.1.0-linux-x86_64.zip"
+    assert PowConfig.release("6.1.0", "x86_64")["url"] == "https://downloads.isaacsim.nvidia.com/isaac-sim-standalone-6.1.0-linux-x86_64.zip"
     for version in ("5.1.0", "6.1.0"):
         install = PowConfig.version_dir(version, tmp_path)
         install.mkdir(parents=True)

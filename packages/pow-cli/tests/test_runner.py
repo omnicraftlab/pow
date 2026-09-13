@@ -37,6 +37,8 @@ def mock_config(mocker):
     mock_powconfig = mocker.patch("pow_cli.core.runner.PowConfig", return_value=cfg)
     mock_powconfig.ISAACSIM_VERSION = PowConfig.ISAACSIM_VERSION
     mock_powconfig.version_dir.side_effect = PowConfig.version_dir
+    mock_powconfig.host_arch.side_effect = PowConfig.host_arch
+    mock_powconfig.SUPPORTED_ARCHITECTURES = PowConfig.SUPPORTED_ARCHITECTURES
     return cfg
 
 def test_build_launch_command_default(mock_config, mocker):
@@ -220,6 +222,26 @@ def test_run_isaacsim_leaves_cpu_alone_by_default(mock_config, mocker):
     ensure.assert_not_called()
 
 
+@pytest.mark.parametrize("machine", ["aarch64", "arm64", "x86_64", "AMD64"])
+def test_run_isaacsim_accepts_supported_architectures(mock_config, mocker, machine):
+    mocker.patch("pathlib.Path.exists", return_value=True)
+    mocker.patch("platform.machine", return_value=machine)
+    mock_run = mocker.patch("subprocess.run")
+
+    Runner.run_isaacsim("default")
+
+    mock_run.assert_called_once()
+
+
+def test_run_isaacsim_rejects_unsupported_architecture(mock_config, mocker):
+    mocker.patch("platform.machine", return_value="ppc64le")
+    mock_run = mocker.patch("subprocess.run")
+
+    with pytest.raises(click.ClickException, match="Unsupported platform: ppc64le"):
+        Runner.run_isaacsim("default")
+    mock_run.assert_not_called()
+
+
 # ── run_sim (project-independent launcher) ──────────────────────────────────────
 # These deliberately do NOT use the mock_config fixture: run_sim must never
 # instantiate PowConfig, so patching it would hide a regression.
@@ -244,6 +266,14 @@ def test_run_sim_builds_command_from_defaults(sim_env):
     args, kwargs = sim_env["run"].call_args
     assert args[0] == [f"/home/user/.pow/isaacsim/{DEFAULT_VERSION}/isaac-sim.sh", "--no-window"]
     assert kwargs.get("check") is True
+
+
+def test_run_sim_runs_on_aarch64(sim_env, mocker):
+    mocker.patch("platform.machine", return_value="aarch64")
+
+    Runner.run_sim()
+
+    sim_env["run"].assert_called_once()
 
 
 def test_run_sim_uses_jazzy_bridge_by_default(sim_env):

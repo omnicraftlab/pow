@@ -10,6 +10,7 @@ All notable changes to the `pow-cli` package will be documented in this file.
 Target: v0.4.0 (version bump and publication are separate).
 
 - Add Isaac Sim 6.1.0 installation and selection, retaining 5.1.0.
+- Support linux-aarch64 hosts (DGX Spark): `pow init` and `pow sim` install NVIDIA's `linux-aarch64` build of 6.1.0 or 5.1.0, and `pow run` / `pow sim` / `pow sim check` launch it. The bundled ROS Docker image is amd64-only, so `pow init` skips it on aarch64 and `pow ros` / `pow ros build` report it as unavailable.
 - Remove Isaac Sim 6.0.1 from the installable versions; projects pinned to it must switch to 6.1.0 or 5.1.0 (existing `~/.pow/isaacsim/6.0.1` installs still launch via `pow sim -v 6.0.1`).
 - Default new projects to 6.1.0 unless a global preference is configured; preserve existing project versions and settings.
 - Reject unknown 6.1.0 ROS workspace/image/container provenance without changing user state; stop instead of deleting stale container-mounted build directories.

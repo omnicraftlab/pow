@@ -83,6 +83,9 @@ def build_cmd(no_cache: bool):
     if config.project_root is None:
         raise click.ClickException("Not initialized. Run `pow init` first.")
 
+    if not RosManager.docker_image_supported():
+        raise click.ClickException(RosManager.docker_image_unsupported_message())
+
     if not config.ros_dockerfile:
         console.print(
             "[yellow]No `ros_dockerfile` set in pow.toml; nothing to build.[/yellow]\n"

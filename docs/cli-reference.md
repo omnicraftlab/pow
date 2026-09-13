@@ -60,6 +60,11 @@ workspace tag cloned at step 6, the `_isaacsim` symlink at step 8, and the
 `version` key written to `pow.toml` at step 10. Re-running `pow init` with a
 different version re-points `_isaacsim` at the new installation.
 
+On an aarch64 host (DGX Spark), step 4 lists only the versions NVIDIA publishes a
+`linux-aarch64` build for and downloads that build. Step 6 still clones the ROS
+workspace and uses Isaac Sim's bundled ROS 2 bridge, but skips building the
+`pow_simros` image: its base, `osrf/ros:jazzy-desktop`, is published for amd64 only.
+
 ### Re-running `pow init` on an existing project
 
 Step 2 asks whether to update the settings in an existing `pow.toml`. Either
@@ -221,7 +226,7 @@ pow python -p perf my_script.py
 
 ## `pow ros`
 
-Launch the ROS Docker container for ROS development. Requires ROS integration to be enabled during `pow init`. By default this runs the bundled `pow_simros_jazzy` image (ROS 2 Jazzy is the only supported distribution); when `ros_dockerfile` / `ros_docker_image` are set in `pow.toml`, it runs your custom image instead. The container is named after the image (characters like `/` and `:` replaced with `_`). See more about the ROS 2 enable flag and custom images in the [Configuration Guide](docs/configuration.md).
+Launch the ROS Docker container for ROS development. Requires ROS integration to be enabled during `pow init`. By default this runs the bundled `pow_simros_jazzy` image (ROS 2 Jazzy is the only supported distribution); when `ros_dockerfile` / `ros_docker_image` are set in `pow.toml`, it runs your custom image instead. The container is named after the image (characters like `/` and `:` replaced with `_`). See more about the ROS 2 enable flag and custom images in the [Configuration Guide](docs/configuration.md). ROS Docker images are not available on aarch64 hosts, so `pow ros` and `pow ros build` stop with an error there.
 
 ```bash
 # Start an interactive ROS bash session
