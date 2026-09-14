@@ -6,8 +6,8 @@
 """Bump the pow-cli version.
 
 Updates packages/pow-cli/pyproject.toml, the workspace root pyproject.toml (kept
-in lockstep), and uv.lock. Touches nothing else -- no commit, no tag, no push.
-Review the diff, write the CHANGELOG entry, commit, then tag and push; publishing
+in lockstep), uv.lock, and the top CHANGELOG heading if it is [Unreleased].
+No commit, no tag, no push. Review the diff and CHANGELOG, then commit, tag and push; publishing
 happens when the GitHub release is created (see docs/releasing.md).
 
     uv run bump.py --bump patch
@@ -23,6 +23,7 @@ import shutil
 import subprocess
 import sys
 import tomllib
+from datetime import date
 from pathlib import Path
 
 PKG_TOML = Path("packages/pow-cli/pyproject.toml")
@@ -81,10 +82,22 @@ def semver(version: str) -> str:
     return re.sub(r"(a|b|rc)(\d+)$", r"-\1.\2", version)
 
 
+def release_changelog(text: str, version: str, release_date: date) -> str:
+    """Promote only the first H2 when it is the Unreleased section."""
+    heading = re.search(r"^ {0,3}##[ \t]+([^\r\n]*)", text, re.MULTILINE)
+    if heading is None or heading.group(1).strip().rstrip("#").strip() != "[Unreleased]":
+        return text
+    return (
+        text[:heading.start()]
+        + f"## [{semver(version)}] - {release_date.isoformat()}"
+        + text[heading.end():]
+    )
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         prog="uv run bump.py",
-        description="Bump the pow-cli version in both pyproject.toml files and uv.lock.",
+        description="Bump the pow-cli version and date the top Unreleased changelog entry.",
         epilog=(
             "The version written to pyproject.toml is canonical PEP 440 -- X.Y.Z "
             "optionally followed by aN, bN, or rcN -- because uv and PyPI "
@@ -157,11 +170,18 @@ def main() -> None:
         )
 
     say(f"pow-cli {current} => {new_version}")
+    release_date = date.today()
+    changelog_text = CHANGELOG.read_text()
+    updated_changelog = release_changelog(changelog_text, new_version, release_date)
+    changelog_changed = updated_changelog != changelog_text
+    tag_version = semver(new_version)
 
     if args.dry_run:
         say("\ndry run; would then:")
         say(f"  uv version --package pow-cli --no-sync {' '.join(spec)}")
         say(f"  uv version --no-sync {new_version}        # workspace root")
+        if changelog_changed:
+            say(f"  {CHANGELOG}: ## [Unreleased] => ## [{tag_version}] - {release_date.isoformat()}")
         return
 
     # --no-sync relocks uv.lock (which pins pow-cli's own version) without
@@ -174,25 +194,30 @@ def main() -> None:
         if got != new_version:
             die(f"{toml} is {got}, expected {new_version}")
 
+    changed_files = list(VERSIONED_FILES)
+    if changelog_changed:
+        CHANGELOG.write_text(updated_changelog)
+        changed_files.append(str(CHANGELOG))
+
     say("\nchanged:")
-    for path in VERSIONED_FILES:
+    for path in changed_files:
         say(f"  {path}")
 
     # Tags and CHANGELOG headings use the SemVer spelling of the same version.
     tag_version = semver(new_version)
 
-    if f"[{tag_version}]" not in CHANGELOG.read_text():
+    if f"[{tag_version}]" not in updated_changelog:
         say(f"\nwarning: no '[{tag_version}]' heading in {CHANGELOG}")
 
     say(
         f"\nNothing committed. Next:\n"
-        f"  1. add the [{tag_version}] entry to {CHANGELOG}\n"
+        f"  1. review the [{tag_version}] entry in {CHANGELOG}\n"
         f"  2. git commit -m 'chore: bump to {tag_version}'\n"
         f"  3. git tag -a v{tag_version} -m 'pow-cli {tag_version}', push branch and tag\n"
         f"  4. gh release create v{tag_version} --title 'pow@v{tag_version}'"
         f"{' --prerelease' if tag_version != new_version else ''} --notes ...\n"
         f"To undo:\n"
-        f"  git checkout -- {' '.join(VERSIONED_FILES)}"
+        f"  git checkout -- {' '.join(changed_files)}"
     )
 
 
