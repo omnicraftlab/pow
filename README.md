@@ -19,19 +19,15 @@ Support platforms:
 | Platform              | Version / Notes              |
 | :-------------------- | :--------------------------- |
 | OS                    | Ubuntu 22.04 / 24.04         |
-| Architecture          | x86_64; aarch64 on DGX Spark (DGX OS 7) |
+| Architecture          | x86_64; aarch64              |
 | ROS 2 Docker          | Jazzy (x86_64 only)          |
 | Isaac Sim             | `6.1.0` (default), `5.1.0`   |
 
-> [!NOTE]
-> On aarch64, pow installs NVIDIA's `linux-aarch64` Isaac Sim build. NVIDIA supports it on
-> DGX Spark only, without cuRobo/cuMotion. The bundled ROS Docker image is amd64-only, so
-> `pow init` skips building it there; Isaac Sim's own ROS 2 bridge still works.
 
 For the full list of ready-to-use commands and options, see the [CLI Reference](docs/cli-reference.md).
 
-> [!NOTE]
-> Pow CLI is actively evolving. New releases may introduce changes to commands, configuration options, or APIs. See the [Changelog](packages/pow-cli/CHANGELOG.md) for the latest updates.
+> [!Important]
+> Pow CLI is actively evolving. New releases may introduce breaking changes to commands, configuration options, or APIs. See the [Changelog](packages/pow-cli/CHANGELOG.md) for the latest updates.
 
 
 ## Installation
@@ -47,16 +43,6 @@ uv tool install pow-cli
 
 # add uv's tool directory to your PATH (once, then restart your shell)
 uv tool update-shell
-```
-
-`pow` is now available everywhere — for example:
-
-```bash
-# Run Isaac Sim from any directory
-pow sim
-
-# or run the compatibility checker to verify the machine meets Isaac Sim's requirements
-pow sim check
 ```
 
 If you have already installed `pow`, upgrade it with:
@@ -105,14 +91,14 @@ Run Isaac Sim:
 # Run the current project's configured Isaac Sim version
 pow run
 
+# Run a standalone Python application with Isaac Sim's Python
+pow python path/to/python_standalone_app.py
+
 # Run Isaac Sim from any directory. This uses [sim] default_version from
 # ~/.pow/system.toml, or the newest installed version when it is unset.
 pow sim
-
-
-# Run a standalone Python application with Isaac Sim's Python
-pow python path/to/python_standalone_app.py
 ```
+
 
 Run a ROS 2 container:
 

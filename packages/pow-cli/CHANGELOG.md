@@ -2,9 +2,7 @@
 
 All notable changes to the `pow-cli` package will be documented in this file.
 
-## [Unreleased]
-
-Changes planned for the 0.4.0 release.
+## [0.4.0] - 2026-09-14
 
 ### Added
 
