@@ -4,21 +4,78 @@ All notable changes to the `pow-cli` package will be documented in this file.
 
 ## [Unreleased]
 
-- Offer a default-No bundled ROS image rebuild prompt during initialization; report Docker inspection failures separately and preserve existing containers and workspaces.
-- Hide setuptools' `setup.py install is deprecated` warning in pow_simros colcon builds (automatic and manual). Existing images need a rebuild (`docker rmi pow_simros_jazzy && pow init`).
+Changes planned for the 0.4.0 release.
 
-Target: v0.4.0 (version bump and publication are separate).
+### Added
 
-- Add Isaac Sim 6.1.0 installation and selection, retaining 5.1.0.
-- Support linux-aarch64 hosts (DGX Spark): `pow init` and `pow sim` install NVIDIA's `linux-aarch64` build of 6.1.0 or 5.1.0, and `pow run` / `pow sim` / `pow sim check` launch it. The bundled ROS Docker image is amd64-only, so `pow init` skips it on aarch64 and `pow ros` / `pow ros build` report it as unavailable.
-- Remove Isaac Sim 6.0.1 from the installable versions; projects pinned to it must switch to 6.1.0 or 5.1.0 (existing `~/.pow/isaacsim/6.0.1` installs still launch via `pow sim -v 6.0.1`).
-- Default new projects to 6.1.0 unless a global preference is configured; preserve existing project versions and settings.
-- Reject unknown 6.1.0 ROS workspace/image/container provenance without changing user state; stop instead of deleting stale container-mounted build directories.
-- Remove the mandatory simulator dependency and declare the Python 3.10 TOML fallback.
-- Reject failed or unrecognized compatibility-check verdicts; actual 6.1.0 output and GPU workflows still require manual verification.
-- Use verified asset namespace mappings; document explicit upgrades, rollback and validation limits.
+- **Isaac Sim 6.1.0 support.** `pow init` now offers 6.1.0, downloads its standalone
+  archive and selects the matching ROS workspace tag. Asset references use
+  `Assets/Isaac/6.1`. Isaac Sim 5.1.0 remains supported.
+- **Linux aarch64 support.** `pow init` and `pow sim` download the
+  aarch64 build of 6.1.0 or 5.1.0 on ARM hosts such as DGX Spark, and the simulator launch and
+  compatibility-check commands accept that architecture. The bundled ROS Docker image remains
+  amd64-only: `pow init` skips its build on aarch64, and `pow ros` / `pow ros build`
+  report that limitation.
+- **`pow sim` / `pow sim check` install missing prerequisites.** Both commands
+  now create missing global folders and `system.toml`, install the selected
+  supported release when absent, and prepare the asset-browser cache before
+  launching. No project or confirmation prompt is required. Incomplete installs
+  are backed up before repair; a failed repair restores the original contents.
+- **ROS image rebuild prompt in `pow init`.** An existing `pow_simros_jazzy`
+  image without a matching simulator-version label used to stop initialization
+  with no rebuild option. Init now asks whether to rebuild it (default: No).
+  Accepting updates the existing tag using Docker's cache and preserves existing
+  containers and workspace files. Recreate containers explicitly to use the new image.
 
-## [Unreleased]
+### Changed
+
+- `pow init` defaults new projects to `6.1.0` unless a global preference is set.
+  Explicit version selection takes precedence; keeping an existing project
+  configuration preserves its selected version.
+- A missing version pinned in global `system.toml` is now installed by `pow sim`
+  and `pow sim check`, rather than falling back to another installed version.
+- **ROS workspace and container compatibility checks.** Setup and launching now
+  check the selected 6.1.0 workspace, image label and running-container mount.
+  Unknown or incompatible state is reported with recovery guidance. Stale
+  container-mounted build directories are no longer deleted automatically.
+- `pow lint` asset-version fixes use verified release mappings. Unknown versions are
+  not rewritten; changes to scenes still require `pow lint fix` and do not migrate
+  renamed assets or application APIs.
+- The optional simulator lookup reads matching distribution metadata without
+  importing `isaacsim`, avoiding simulator startup during path discovery.
+- Python 3.10 installs `tomli` for the existing `tomllib` fallback.
+
+### Fixed
+
+- **`pow init` could not upgrade an existing project's simulator version.**
+  Choosing to update the project now opens the version picker instead of keeping
+  the old version. Explicit `--sim-version` changes are saved with the
+  corresponding simulator link and editor paths while preserving unrelated TOML
+  settings, profiles, and comments.
+- **`pow sim check` accepted unsuccessful verdicts.** A `System checking result:`
+  line now succeeds only when its verdict is `PASSED`; failed or unrecognized
+  verdicts are errors, alongside missing results and nonzero process exits.
+- **Docker inspection errors were treated as missing or incompatible images.**
+  Daemon and permission failures now report the underlying error without offering
+  a rebuild. Failed ROS builds stop initialization before custom-image building
+  and finalization.
+- **`setup.py install is deprecated` warnings during colcon builds** — suppressed
+  in both automatic and manual builds inside the bundled ROS container
+  (requires rebuilding the image).
+- `pow asset set` now suggests `pow asset unset` when the assets symlink already
+  exists, instead of telling the user to remove it manually.
+
+### Removed
+
+- **Isaac Sim 6.0.1 installation support.** Projects pinned to it must select
+  6.1.0 or 5.1.0 for initialization; an existing complete 6.0.1 installation can
+  still launch through `pow sim -v 6.0.1`.
+- The mandatory `isaacsim` runtime dependency — installing and starting pow-cli
+  no longer requires a simulator package.
+
+Automated coverage uses mocked simulator, GPU, network, and Docker operations.
+Actual 6.1.0 checker output, GUI/headless launches, standalone Python, ROS topic
+delivery, and DGX Spark workflows still require hardware validation.
 
 ---
 
