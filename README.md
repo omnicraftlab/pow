@@ -2,6 +2,9 @@
     <img src="https://raw.githubusercontent.com/bemunin/isaac-powerpack/main/docs/public/logo.svg" width="400"/>
 </p>
 
+> [!IMPORTANT]
+> Development is on pause while we reassess the roadmap, including a broader redesign toward agentic AI workflows and a Pixi-based backend for multi-platform support.
+
 **Isaac Powerpack** (or **Pow** for short) is a project management tool that aims to reduce friction in **NVIDIA Isaac Sim** application development.
 
 
@@ -26,8 +29,7 @@ Support platforms:
 
 For the full list of ready-to-use commands and options, see the [CLI Reference](docs/cli-reference.md).
 
-> [!Important]
-> Pow CLI is actively evolving. New releases may introduce breaking changes to commands, configuration options, or APIs. See the [Changelog](packages/pow-cli/CHANGELOG.md) for the latest updates.
+Pow CLI is actively evolving. New releases may introduce breaking changes to commands, configuration options, or APIs. See the [Changelog](packages/pow-cli/CHANGELOG.md) for the latest updates.
 
 
 ## Installation
